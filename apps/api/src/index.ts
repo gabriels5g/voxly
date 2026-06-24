@@ -3,6 +3,7 @@ import { Hono } from "hono"
 import { logger } from "hono/logger"
 import { cors } from "hono/cors"
 import "dotenv/config"
+import uploadRoute from "./routes/upload"
 import videos from "./routes/videos"
 
 const app = new Hono()
@@ -22,6 +23,7 @@ app.get("/", (c) => {
 })
 
 app.route("/videos", videos)
+app.route("/upload", uploadRoute)
 
 const PORT = Number(process.env.PORT) || 3001
 
