@@ -1,5 +1,4 @@
 import { Hono } from "hono"
-import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { db } from "../db"
 import { videos } from "../db/schema"
@@ -10,31 +9,35 @@ const videosRoute = new Hono()
 const createVideoSchema = z.object({
   filename: z.string().min(1),
   filesize: z.number().max(500 * 1024 * 1024),
-  mimetype: z.string().refine((v) =>
-    ["video/mp4", "video/quicktime", "video/x-msvideo", "audio/mpeg", "audio/wav"].includes(v),
-    { message: "Formato não suportado" }
-  ),
+  mimetype: z.enum(["video/mp4", "video/quicktime", "video/x-msvideo", "audio/mpeg", "audio/wav"]),
   platform: z.enum(["youtube", "instagram", "tiktok", "linkedin"]).default("youtube"),
   tone: z.enum(["casual", "professional", "educational", "entertaining"]).default("casual"),
 })
 
-// POST /videos — cria um novo job no banco
-videosRoute.post("/", zValidator("json", createVideoSchema), async (c) => {
-  const body = c.req.valid("json")
+// POST /videos
+videosRoute.post("/", async (c) => {
+  const body = await c.req.json()
+  const result = createVideoSchema.safeParse(body)
+
+  if (!result.success) {
+    return c.json({ error: result.error.flatten() }, 400)
+  }
+
+  const data = result.data
 
   const [video] = await db.insert(videos).values({
-    filename: body.filename,
-    filesize: body.filesize,
-    mimetype: body.mimetype,
-    platform: body.platform,
-    tone: body.tone,
+    filename: data.filename,
+    filesize: data.filesize,
+    mimetype: data.mimetype,
+    platform: data.platform,
+    tone: data.tone,
     status: "pending",
   }).returning()
 
   return c.json({ job: video }, 201)
 })
 
-// GET /videos/:id — busca o job no banco
+// GET /videos/:id
 videosRoute.get("/:id", async (c) => {
   const id = c.req.param("id")
 
