@@ -3,6 +3,7 @@ import { Hono } from "hono"
 import { logger } from "hono/logger"
 import { cors } from "hono/cors"
 import "dotenv/config"
+import videos from "./routes/videos"
 
 const app = new Hono()
 
@@ -19,6 +20,8 @@ app.get("/health", (c) => {
 app.get("/", (c) => {
   return c.json({ message: "Voxly API 🚀" })
 })
+
+app.route("/videos", videos)
 
 const PORT = Number(process.env.PORT) || 3001
 
