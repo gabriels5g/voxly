@@ -1,159 +1,139 @@
-# Turborepo starter
+# Voxly
 
-This Turborepo starter is maintained by the Turborepo core team.
+Faça upload do seu vídeo e gere títulos, descrição, tags, capítulos e posts para redes sociais com IA — em segundos.
 
-## Using this example
+## Como funciona
 
-Run the following command:
+1. Usuário faz upload do vídeo
+2. API registra o job no banco e envia o arquivo pro Supabase Storage
+3. Worker extrai o áudio com FFmpeg e transcreve com Whisper
+4. Claude gera os metadados otimizados para SEO
+5. Frontend exibe os resultados em tempo real
 
-```sh
-npx create-turbo@latest
+## Stack
+
+| Camada | Tecnologia |
+|--------|-----------|
+| Frontend | Next.js 15, Tailwind CSS |
+| API | Hono, Node.js |
+| Banco | PostgreSQL (Neon) + Drizzle ORM |
+| Storage | Supabase Storage |
+| Transcrição | OpenAI Whisper |
+| IA | Claude (Anthropic) |
+| Monorepo | Turborepo + npm workspaces |
+
+## Estrutura
+
+```
+voxly/
+├── apps/
+│   ├── web/        # Frontend Next.js
+│   ├── api/        # Backend Hono
+│   └── worker/     # Processamento FFmpeg + Whisper + Claude
+└── packages/
+    ├── shared/     # Tipos TypeScript compartilhados
+    ├── ui/         # Componentes React compartilhados
+    ├── eslint-config/
+    └── typescript-config/
 ```
 
-## What's inside?
+## Rodando localmente
 
-This Turborepo includes the following packages/apps:
+### Pré-requisitos
 
-### Apps and Packages
+- Node.js 18+
+- npm 9+
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### Instalação
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+git clone https://github.com/seu-usuario/voxly.git
+cd voxly
+npm install
 ```
 
-Without global `turbo`, use your package manager:
+### Variáveis de ambiente
 
-```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
+Cria o arquivo `apps/api/.env`:
+
+```env
+DATABASE_URL=sua_url_do_neon
+SUPABASE_URL=sua_url_do_supabase
+SUPABASE_SERVICE_KEY=sua_chave_secreta
+PORT=3001
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Cria o arquivo `apps/web/.env.local`:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-Without global `turbo`:
+### Desenvolvimento
 
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
+Roda o frontend e a API ao mesmo tempo:
+
+```bash
+npm run dev
 ```
 
-### Develop
+Ou separadamente:
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
+```bash
+# Só o frontend — http://localhost:3000
 npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
+
+# Só a API — http://localhost:3001
+npx turbo dev --filter=api
 ```
 
-### Remote Caching
+## API
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+### Rotas disponíveis
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
+```
+GET  /health              → status da API
+POST /videos              → registra um novo job
+GET  /videos/:id          → busca o status de um job
+POST /upload/:videoId     → faz upload do arquivo de vídeo
 ```
 
-Without global `turbo`, use your package manager:
+### Exemplo de uso
 
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
+Criar um job:
+
+```bash
+curl -X POST http://localhost:3001/videos \
+  -H "Content-Type: application/json" \
+  -d '{"filename":"meu-video.mp4","filesize":10485760,"mimetype":"video/mp4","platform":"youtube","tone":"casual"}'
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+Fazer upload do arquivo:
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
+```bash
+curl -X POST http://localhost:3001/upload/{videoId} \
+  -F "file=@/caminho/do/video.mp4"
 ```
 
-Without global `turbo`:
+### Status do job
 
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
+| Status | Descrição |
+|--------|-----------|
+| `pending` | Job criado, aguardando processamento |
+| `uploaded` | Arquivo salvo no storage |
+| `processing` | Worker transcrevendo e gerando metadados |
+| `done` | Metadados prontos |
+| `error` | Erro durante o processamento |
 
-## Useful Links
+## Roadmap
 
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- [x] Monorepo configurado
+- [x] Landing page
+- [x] API com Hono
+- [x] Banco de dados com Drizzle + Neon
+- [x] Upload para Supabase Storage
+- [ ] Worker com FFmpeg + Whisper
+- [ ] Geração de metadados com Claude
+- [ ] Autenticação com Clerk
+- [ ] Planos e pagamento com Stripe
+- [ ] Deploy (Vercel + Railway)
