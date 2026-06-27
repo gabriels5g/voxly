@@ -41,12 +41,38 @@ uploadRoute.post("/:videoId", async (c) => {
     .where(eq(videos.id, videoId))
 
   // Dispara o worker em segundo plano
-  const workerPath = path.resolve(__dirname, "../../worker/src/index.ts")
-  const worker = spawn("npx", ["tsx", workerPath, videoId], {
-    detached: true,
-    stdio: "ignore",
-    env: { ...process.env },
+  const workerPath = path.resolve(
+    process.cwd(),
+    "../../apps/worker/src/index.ts"
+  )
+
+  const envPath = path.resolve(
+    process.cwd(),
+    "../../apps/worker/.env"
+  )
+
+  const worker = spawn(
+    "npx",
+    ["tsx", workerPath, videoId],
+    {
+      detached: true,
+      stdio: "pipe",
+      env: {
+        ...process.env,
+        DOTENV_CONFIG_PATH: envPath,
+      },
+      shell: true,
+    }
+  )
+
+  worker.stdout?.on("data", (data) => {
+    console.log(`[worker] ${data.toString().trim()}`)
   })
+
+  worker.stderr?.on("data", (data) => {
+    console.error(`[worker:err] ${data.toString().trim()}`)
+  })
+
   worker.unref()
 
   return c.json({ success: true, path: filename })
