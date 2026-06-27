@@ -31,16 +31,34 @@ export default function ResultadoPage() {
   const [copied, setCopied] = useState("")
 
   useEffect(() => {
+    let attempts = 0
+    const maxAttempts = 60 // 3 minutos no máximo
+
     const interval = setInterval(async () => {
-      const { data } = await axios.get(`${API}/videos/${id}`)
-      setJob(data.job)
-      if (data.job.status === "done" || data.job.status === "error") {
+      attempts++
+
+      if (attempts > maxAttempts) {
         clearInterval(interval)
+        return
+      }
+
+      try {
+        const { data } = await axios.get(`${API}/videos/${id}`)
+        setJob(data.job)
+
+        if (data.job.status === "done" || data.job.status === "error") {
+          clearInterval(interval)
+        }
+      } catch (err) {
+        // Silencia erros de rede — a API pode estar iniciando
+        console.warn(`[polling] tentativa ${attempts} falhou`)
       }
     }, 3000)
 
     // Chama imediatamente
-    axios.get(`${API}/videos/${id}`).then(({ data }) => setJob(data.job))
+    axios.get(`${API}/videos/${id}`)
+      .then(({ data }) => setJob(data.job))
+      .catch(() => {})
 
     return () => clearInterval(interval)
   }, [id])
