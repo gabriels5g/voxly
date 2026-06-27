@@ -7,7 +7,7 @@ export default function Home() {
         <span className="text-xl font-bold tracking-tight">Voxly</span>
         <div className="flex items-center gap-4">
           <a href="#" className="text-sm text-zinc-400 hover:text-white transition">Preços</a>
-          <a href="#" className="text-sm bg-white text-black px-4 py-2 rounded-full font-medium hover:bg-zinc-200 transition">
+          <a href="/upload" className="text-sm bg-white text-black px-4 py-2 rounded-full font-medium hover:bg-zinc-200 transition">
             Entrar
           </a>
         </div>
@@ -16,7 +16,7 @@ export default function Home() {
       {/* Hero */}
       <section className="flex flex-col items-center justify-center text-center px-4 py-32">
         <div className="inline-block bg-white/10 text-zinc-300 text-xs px-3 py-1 rounded-full mb-6 border border-white/20">
-          ✨ Powered by Claude AI + Whisper
+          ✨ Powered by Groq + Whisper
         </div>
         <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight max-w-4xl">
           Seu vídeo.<br />
@@ -26,9 +26,9 @@ export default function Home() {
           Faça upload do vídeo, a IA transcreve e gera títulos, descrição, tags, capítulos e posts para redes sociais em segundos.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
-          <button className="bg-white text-black font-semibold px-8 py-3 rounded-full hover:bg-zinc-200 transition">
+          <a href="/upload" className="bg-white text-black font-semibold px-8 py-3 rounded-full hover:bg-zinc-200 transition">
             Começar grátis
-          </button>
+          </a>
           <button className="border border-white/20 text-white px-8 py-3 rounded-full hover:bg-white/10 transition">
             Ver demonstração
           </button>
