@@ -1,20 +1,22 @@
-import Anthropic from "@anthropic-ai/sdk"
-
-const client = new Anthropic()
+import Groq from "groq-sdk"
 
 export async function generateMetadata(
   transcript: string,
   platform: string,
   tone: string
 ) {
-  console.log(`[claude] gerando metadados`)
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 2048,
-    system: `Você é um especialista em SEO para plataformas de vídeo.
-Responda EXCLUSIVAMENTE com JSON válido. Sem texto antes ou depois.`,
+  console.log(`[groq] gerando metadados`)
+
+  const response = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
     messages: [
+      {
+        role: "system",
+        content: `Você é um especialista em SEO para plataformas de vídeo.
+Responda EXCLUSIVAMENTE com JSON válido. Sem texto antes ou depois.`,
+      },
       {
         role: "user",
         content: `Analise a transcrição e gere metadados otimizados.
@@ -45,13 +47,10 @@ Responda com este JSON exato:
 Gere 4 títulos, entre 10 e 15 tags.`,
       },
     ],
+    temperature: 0.7,
   })
 
-  const raw = response.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { type: "text"; text: string }).text)
-    .join("")
-
+  const raw = response.choices[0].message.content || ""
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
 
   return JSON.parse(cleaned)

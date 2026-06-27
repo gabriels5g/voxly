@@ -1,18 +1,19 @@
 import fs from "fs"
-import OpenAI from "openai"
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import Groq from "groq-sdk"
 
 export async function transcribeAudio(audioPath: string): Promise<string> {
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+
   console.log(`[whisper] transcrevendo ${audioPath}`)
 
-  const response = await openai.audio.transcriptions.create({
+  const response = await groq.audio.transcriptions.create({
     file: fs.createReadStream(audioPath),
-    model: "whisper-1",
+    model: "whisper-large-v3",
     language: "pt",
-    response_format: "text",
   })
 
-  console.log(`[whisper] transcrição concluída — ${response.length} caracteres`)
-  return response
+  const text = response.text
+
+  console.log(`[whisper] transcrição concluída — ${text.length} caracteres`)
+  return text
 }
