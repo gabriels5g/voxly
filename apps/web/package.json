@@ -11,6 +11,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.5.9",
     "@repo/ui": "*",
     "@tailwindcss/postcss": "^4.3.1",
     "axios": "^1.18.1",

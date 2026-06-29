@@ -1,17 +1,11 @@
+import Navbar from "./components/Navbar";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-black text-white">
 
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10">
-        <span className="text-xl font-bold tracking-tight">Voxly</span>
-        <div className="flex items-center gap-4">
-          <a href="#" className="text-sm text-zinc-400 hover:text-white transition">Preços</a>
-          <a href="/upload" className="text-sm bg-white text-black px-4 py-2 rounded-full font-medium hover:bg-zinc-200 transition">
-            Entrar
-          </a>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
       <section className="flex flex-col items-center justify-center text-center px-4 py-32">
