@@ -3,8 +3,11 @@
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
+import { useAuth } from "@clerk/nextjs"
+import Link from "next/link"
 
 const API = process.env.NEXT_PUBLIC_API_URL
+
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -14,6 +17,7 @@ export default function UploadPage() {
   const [error, setError] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+  const { getToken } = useAuth()
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
@@ -27,14 +31,22 @@ export default function UploadPage() {
     setError("")
 
     try {
+      const token = await getToken()
+
       // 1. Cria o job
-      const { data: jobData } = await axios.post(`${API}/videos`, {
-        filename: file.name,
-        filesize: file.size,
-        mimetype: file.type,
-        platform,
-        tone,
-      })
+      const { data: jobData } = await axios.post(
+        `${API}/videos`,
+        {
+          filename: file.name,
+          filesize: file.size,
+          mimetype: file.type,
+          platform,
+          tone,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
 
       const jobId = jobData.job.id
 
@@ -56,9 +68,9 @@ export default function UploadPage() {
     <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-xl">
 
-        <a href="/" className="text-zinc-500 text-sm mb-8 block hover:text-white transition">
+        <Link href="/" className="text-zinc-500 text-sm mb-8 block hover:text-white transition" />
           ← Voltar
-        </a>
+
 
         <h1 className="text-3xl font-bold mb-2">Enviar vídeo</h1>
         <p className="text-zinc-400 mb-8 text-sm">

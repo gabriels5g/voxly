@@ -2,6 +2,7 @@ import { pgTable, text, integer, timestamp, jsonb } from "drizzle-orm/pg-core"
 
 export const videos = pgTable("videos", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id"),
   filename: text("filename").notNull(),
   filesize: integer("filesize").notNull(),
   mimetype: text("mimetype").notNull(),

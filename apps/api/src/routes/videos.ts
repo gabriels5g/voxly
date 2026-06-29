@@ -4,6 +4,7 @@ import { db } from "../db"
 import { videos } from "../db/schema"
 import { eq } from "drizzle-orm"
 
+
 const videosRoute = new Hono()
 
 const createVideoSchema = z.object({
@@ -14,6 +15,21 @@ const createVideoSchema = z.object({
   tone: z.enum(["casual", "professional", "educational", "entertaining"]).default("casual"),
 })
 
+async function getUserId(c: any): Promise<string | null> {
+  try {
+    const token = c.req.header("Authorization")?.replace("Bearer ", "")
+    if (!token) return null
+
+    const { verifyToken } = await import("@clerk/backend")
+    const payload = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY!,
+    })
+    return payload.sub ?? null
+  } catch {
+    return null
+  }
+}
+
 // POST /videos
 videosRoute.post("/", async (c) => {
   const body = await c.req.json()
@@ -23,9 +39,11 @@ videosRoute.post("/", async (c) => {
     return c.json({ error: result.error.flatten() }, 400)
   }
 
+  const userId = await getUserId(c)
   const data = result.data
 
   const [video] = await db.insert(videos).values({
+    userId,
     filename: data.filename,
     filesize: data.filesize,
     mimetype: data.mimetype,
@@ -40,7 +58,6 @@ videosRoute.post("/", async (c) => {
 // GET /videos/:id
 videosRoute.get("/:id", async (c) => {
   const id = c.req.param("id")
-
   const [video] = await db.select().from(videos).where(eq(videos.id, id))
 
   if (!video) {
@@ -48,6 +65,23 @@ videosRoute.get("/:id", async (c) => {
   }
 
   return c.json({ job: video })
+})
+
+// GET /videos — lista vídeos do usuário
+videosRoute.get("/", async (c) => {
+  const userId = await getUserId(c)
+
+  if (!userId) {
+    return c.json({ error: "Não autorizado" }, 401)
+  }
+
+  const userVideos = await db
+    .select()
+    .from(videos)
+    .where(eq(videos.userId, userId))
+    .orderBy(videos.createdAt)
+
+  return c.json({ videos: userVideos })
 })
 
 export default videosRoute
